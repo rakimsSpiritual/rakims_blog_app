@@ -1,0 +1,5 @@
+[build]
+command = "cd client && npm install && npm run build && cd ../backend && npm install"
+
+[start]
+command = "node backend/server.js"
